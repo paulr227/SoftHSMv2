@@ -736,6 +736,7 @@ void SoftHSM::prepareSupportedMecahnisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_AES_ECB"]		= CKM_AES_ECB;
 	t["CKM_AES_CBC"]		= CKM_AES_CBC;
 	t["CKM_AES_CBC_PAD"]		= CKM_AES_CBC_PAD;
+	t["CKM_AES_OFB"]		= CKM_AES_OFB;
 	t["CKM_AES_CTR"]		= CKM_AES_CTR;
 #ifdef WITH_AES_GCM
 	t["CKM_AES_GCM"]		= CKM_AES_GCM;
@@ -1096,6 +1097,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_AES_ECB:
 		case CKM_AES_CBC:
 		case CKM_AES_CBC_PAD:
+		case CKM_AES_OFB:
 		case CKM_AES_CTR:
 #ifdef WITH_AES_GCM
 		case CKM_AES_GCM:
@@ -2068,6 +2070,7 @@ static bool isSymMechanism(CK_MECHANISM_PTR pMechanism)
 		case CKM_AES_ECB:
 		case CKM_AES_CBC:
 		case CKM_AES_CBC_PAD:
+		case CKM_AES_OFB:
 		case CKM_AES_CTR:
 		case CKM_AES_GCM:
 			return true;
@@ -2215,6 +2218,18 @@ CK_RV SoftHSM::SymEncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			algo = SymAlgo::AES;
 			mode = SymMode::CBC;
 			padding = true;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			break;
+		case CKM_AES_OFB:
+			algo = SymAlgo::AES;
+			mode = SymMode::OFB;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{
@@ -2896,6 +2911,18 @@ CK_RV SoftHSM::SymDecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			algo = SymAlgo::AES;
 			mode = SymMode::CBC;
 			padding = true;
+			if (pMechanism->pParameter == NULL_PTR ||
+			    pMechanism->ulParameterLen == 0)
+			{
+				DEBUG_MSG("CBC mode requires an init vector");
+				return CKR_ARGUMENTS_BAD;
+			}
+			iv.resize(pMechanism->ulParameterLen);
+			memcpy(&iv[0], pMechanism->pParameter, pMechanism->ulParameterLen);
+			break;
+		case CKM_AES_OFB:
+			algo = SymAlgo::AES;
+			mode = SymMode::OFB;
 			if (pMechanism->pParameter == NULL_PTR ||
 			    pMechanism->ulParameterLen == 0)
 			{

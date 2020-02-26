@@ -238,6 +238,18 @@ const EVP_CIPHER* OSSLAES::getCipher() const
 				return EVP_aes_256_ecb();
 		};
 	}
+	else if (currentCipherMode == SymMode::OFB)
+	{
+		switch(currentKey->getBitLen())
+		{
+			case 128:
+				return EVP_aes_128_ofb();
+			case 192:
+				return EVP_aes_192_ofb();
+			case 256:
+				return EVP_aes_256_ofb();
+		};
+	}
 	else if (currentCipherMode == SymMode::CTR)
 	{
 		switch(currentKey->getBitLen())
